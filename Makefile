@@ -1,5 +1,5 @@
-main: main.o dataset.o utils.o
-	gcc -std=gnu89 -Wall -pedantic -o main main.o dataset.o utils.o
+main: main.o dataset.o csr.o utils.o 
+	gcc -std=gnu89 -Wall -pedantic -o main main.o dataset.o utils.o csr.o
 	rm -f *.o
 
 main.o: main.c dataset.h 

@@ -17,7 +17,7 @@ void destroy_on_error(DATASET* dataset, int allocated_pointers) {
     dataset->n_nodes = 0;
 }
 
-void destroy(DATASET* dataset) {
+void destroy_dataset(DATASET* dataset) {
     int i = 0;
     for (i = 0; i < dataset->n_edges; i++) {
         free(dataset->DATA[i]);
@@ -32,13 +32,16 @@ void destroy(DATASET* dataset) {
 int compare_dataset_entries(const void *a, const void *b) {
     const int *_a = *(const int **)a;
     const int *_b = *(const int **)b;
-
     if(_a[0] == _b[0]) {
         return _a[1] - _b[1];
     } else {
         return _a[0] - _b[0];
     }
 
+}
+
+void sort_dataset(DATASET* dataset) {
+    qsort(dataset->DATA, dataset->n_edges, sizeof(*(dataset->DATA)), compare_dataset_entries);
 }
 
 int get_dataset_size(FILE *file, DATASET* dataset) {
@@ -87,7 +90,7 @@ int get_dataset_entry(FILE *file, int *to_node_id, int *from_node_id) {
     return EOF;
 }
 
-int get_dataset_entries(FILE *file, DATASET* dataset) {
+int get_dataset_entries(FILE *file, DATASET* dataset, int order) {
     int to_node_id;
     int from_node_id;
     int status;
@@ -101,10 +104,14 @@ int get_dataset_entries(FILE *file, DATASET* dataset) {
 
         DATA[i] = (int*)malloc(sizeof(int)*2);
         if (DATA[i] != NULL) {
-            DATA[i][0] = to_node_id;
-            DATA[i][1] = from_node_id;
+            if (order == TO_NODE_ID_FIRST) {
+                DATA[i][0] = to_node_id;
+                DATA[i][1] = from_node_id;
+            } else {
+                DATA[i][0] = from_node_id;
+                DATA[i][1] = to_node_id;
+            }
         } else {
-            // TODO: deallocate all
             destroy_on_error(dataset, i+1);
             return STATUS_ERR;
         }
@@ -117,10 +124,13 @@ int get_dataset_entries(FILE *file, DATASET* dataset) {
     if (status != EOF) {
         return STATUS_ERR;
     }
+    if (order == TO_NODE_ID_FIRST) {
+        sort_dataset(dataset);
+    }
     return STATUS_OK;
 }
 
-int read_dataset_from_file(char *file_path, DATASET* dataset) {
+int read_dataset_from_file(char *file_path, DATASET* dataset, int order) {
     FILE *f;
     int status;
     f = fopen(file_path,"r");
@@ -137,17 +147,12 @@ int read_dataset_from_file(char *file_path, DATASET* dataset) {
     // initialize DATASET
     dataset->DATA = (int**)malloc(sizeof(int*)*dataset->n_edges);
     //TODO: check error
-    if ((status = get_dataset_entries(f, dataset)) == STATUS_ERR) {
+    if ((status = get_dataset_entries(f, dataset, order)) == STATUS_ERR) {
         printf("[ERR] ");
     }
-
     if (fclose(f) == EOF) {
         printf("[ERR] Error closing the file.\n");
         return STATUS_ERR;
     }
     return STATUS_OK;
-}
-
-void sort_dataset(DATASET dataset) {
-
 }
