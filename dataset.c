@@ -6,6 +6,29 @@
 #include "constants.h"
 #include "utils.h"
 
+void destroy_on_error(DATASET* dataset, int allocated_pointers) {
+    int i = 0;
+    for (i = 0; i < allocated_pointers; i++) {
+        free(dataset->DATA[i]);
+    }
+    free(dataset->DATA);
+    dataset->DATA = NULL;
+    dataset->n_edges = 0;
+    dataset->n_nodes = 0;
+}
+
+void destroy(DATASET* dataset) {
+    int i = 0;
+    for (i = 0; i < dataset->n_edges; i++) {
+        free(dataset->DATA[i]);
+    }
+    free(dataset->DATA);
+    dataset->DATA = NULL;
+    dataset->n_edges = 0;
+    dataset->n_nodes = 0;
+}
+
+
 int compare_dataset_entries(const void *a, const void *b) {
     const int *_a = *(const int **)a;
     const int *_b = *(const int **)b;
@@ -18,38 +41,36 @@ int compare_dataset_entries(const void *a, const void *b) {
 
 }
 
-int get_dataset_size(FILE *file, int *n_nodes, int* n_edges) {
+int get_dataset_size(FILE *file, DATASET* dataset) {
     
     char *readed_line = NULL;
     ssize_t n_char_readed = 0;
     size_t len = 0;
-    int found_dataset_size = NOT_FOUND;
+    int status = STATUS_ERR;
 
     while((n_char_readed = getline(&readed_line, &len, file)) != EOF) {
         if (n_char_readed > 0) {
             if (readed_line[0] != '#') {
-                return found_dataset_size;
+                break;
             } else {
                 if (starts_with("# Nodes:", readed_line)) {
-                    if (sscanf( readed_line, "# Nodes: %d Edges: %d", n_nodes, n_edges ) != EOF) {
-                        found_dataset_size = FOUND;
+                    if (sscanf(readed_line, "# Nodes: %d Edges: %d", &(dataset->n_nodes), &(dataset->n_edges)) != EOF) {
                         free(readed_line);
                         readed_line = NULL;
                         len = 0;
-                        if ((n_char_readed = getline(&readed_line, &len, file)) == EOF) {
-                            return STATUS_ERR;
+                        if ((n_char_readed = getline(&readed_line, &len, file)) != EOF) {
+                            status = STATUS_OK;
                         }
-                        return STATUS_OK;
+                        break;
                     }
                 }
             }
         }
-        
-        n_char_readed = 0;
         free(readed_line);
         readed_line = NULL;
+        len = 0;
     }
-    return found_dataset_size;
+    return status;
 }
 
 int get_dataset_entry(FILE *file, int *to_node_id, int *from_node_id) {
@@ -66,29 +87,31 @@ int get_dataset_entry(FILE *file, int *to_node_id, int *from_node_id) {
     return EOF;
 }
 
-int get_dataset_entries(FILE *file, int*** DATASET, int n_edges) {
+int get_dataset_entries(FILE *file, DATASET* dataset) {
     int to_node_id;
     int from_node_id;
     int status;
     int i;
-    int **_DATASET;
+    int **DATA;
 
     i = 0;
-    _DATASET = *DATASET;
+    DATA = dataset->DATA;
 
-    while((status = get_dataset_entry(file, &to_node_id, &from_node_id)) == STATUS_OK || i < n_edges) {
+    while((status = get_dataset_entry(file, &(to_node_id), &from_node_id)) == STATUS_OK || i < dataset->n_edges) {
 
-        _DATASET[i] = (int*)malloc(sizeof(int)*2);
-        if (_DATASET[i] != NULL) {
-            _DATASET[i][0] = to_node_id;
-            _DATASET[i][1] = from_node_id;
+        DATA[i] = (int*)malloc(sizeof(int)*2);
+        if (DATA[i] != NULL) {
+            DATA[i][0] = to_node_id;
+            DATA[i][1] = from_node_id;
         } else {
+            // TODO: deallocate all
+            destroy_on_error(dataset, i+1);
             return STATUS_ERR;
         }
         i++;
     }
-    if (n_edges != i) {
-        printf("[ERR] Number of edges mismatch: Header says %d  but in file there are %d edges\n", n_edges, i);
+    if (dataset->n_edges != i) {
+        printf("[ERR] Number of edges mismatch: Header says %d  but in file there are %d edges\n", dataset->n_edges, i);
         return STATUS_ERR;
     }
     if (status != EOF) {
@@ -97,7 +120,7 @@ int get_dataset_entries(FILE *file, int*** DATASET, int n_edges) {
     return STATUS_OK;
 }
 
-int read_file(char *file_path, int*** DATASET, int *n_nodes, int* n_edges) {
+int read_dataset_from_file(char *file_path, DATASET* dataset) {
     FILE *f;
     int status;
     f = fopen(file_path,"r");
@@ -107,15 +130,15 @@ int read_file(char *file_path, int*** DATASET, int *n_nodes, int* n_edges) {
         return STATUS_ERR;
     }
 
-    if (get_dataset_size(f, n_nodes, n_edges) == NOT_FOUND) {
+    if (get_dataset_size(f, dataset) == NOT_FOUND) {
         printf("[ERR] Fail getting dataset size.\n");
         return STATUS_ERR;
     }
     // initialize DATASET
-    *DATASET = (int**)malloc(sizeof(int*)*(*n_edges));
-
-    if ((status = get_dataset_entries(f, DATASET, *n_edges)) == STATUS_ERR) {
-        printf("[ERR] ")
+    dataset->DATA = (int**)malloc(sizeof(int*)*dataset->n_edges);
+    //TODO: check error
+    if ((status = get_dataset_entries(f, dataset)) == STATUS_ERR) {
+        printf("[ERR] ");
     }
 
     if (fclose(f) == EOF) {
@@ -126,9 +149,5 @@ int read_file(char *file_path, int*** DATASET, int *n_nodes, int* n_edges) {
 }
 
 void sort_dataset(DATASET dataset) {
-
-}
-
-void destroy(DATASET dataset) {
 
 }

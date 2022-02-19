@@ -7,4 +7,7 @@
 #define NOT_FOUND 1
 #define FOUND 0
 
+#define COLUMN_FIRST 0
+#define ROW_FIRST 1
+
 #endif
