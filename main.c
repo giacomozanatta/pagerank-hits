@@ -11,7 +11,7 @@ int main() {
     //int i;
     DATASET dataset;
     CSR csr;
-    status = read_dataset_from_file("data/web-NotreDame.txt", &dataset, TO_NODE_ID_FIRST);
+    status = read_dataset_from_file("data/web-NotreDame.txt", &dataset, FROM_NODE_ID_FIRST);
     if (status == STATUS_ERR) {
         printf("[ERR] Error reading file.\n");
         return STATUS_ERR;
@@ -25,17 +25,22 @@ int main() {
         printf("[ERR] Error creating CSR.\n");
         return STATUS_ERR;
     }
+    status = make_stochastic(&csr);
+    //page_rank_iterate();
 
+    //hits_iterate();
+    //in_degree_ranking();
+    //jaccard();
     printf("***** NUM_COLS: %d\n", csr.n_cols);
-    /*for (i = 0; i < csr.n_cols; i++) {
+    for (int i = 0; i < csr.n_cols; i++) {
         printf("%d\n", csr.col_index[i]);
-    }*/
+    }
     
     printf("****** NUM_ROWS: %d\n", csr.n_rows);
-    /*for (i = 0; i < csr.n_rows; i++) {
+    for (i = 0; i < csr.n_rows; i++) {
         printf("%d\n", csr.row_ptr[i]);
     }
-    printf("\n\n\n\n");*/
+    printf("\n\n\n\n");
     /*for (i = 0; i < csr.n_cols; i++) {
         int row_elem = csr.row_ptr[i + 1] - csr.row_ptr[i];
         for (int j = 0; j < row_elem; j++) {

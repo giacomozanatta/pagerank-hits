@@ -17,7 +17,7 @@ int allocate_csr(CSR* csr, int n_cols, int n_rows) {
         return STATUS_ERR;
     }
     
-    csr->row_ptr = (int*) malloc(sizeof(int)*(n_rows));
+    csr->row_ptr = (int*) malloc(sizeof(int)*(n_rows+1));
     
     if (csr->row_ptr == NULL) {
         free(csr->val);
@@ -28,7 +28,7 @@ int allocate_csr(CSR* csr, int n_cols, int n_rows) {
     }
 
     csr->n_cols = n_cols;
-    csr->n_rows = n_rows;
+    csr->n_rows = n_rows + 1;
 
     return STATUS_OK;
 }
@@ -39,6 +39,7 @@ int csr_from_dataset(DATASET dataset, CSR* csr) {
     int j;
     int row = 0; 
     int row_idx = 0;
+    int n_elem = 0;
     if (allocate_csr(csr, dataset.n_edges, dataset.n_nodes) != STATUS_OK) {
         return STATUS_ERR;
     }
@@ -57,10 +58,20 @@ int csr_from_dataset(DATASET dataset, CSR* csr) {
             row_idx += new_rows;
         }
     }
+    // last position
+    csr->row_ptr[csr->n_rows-1] = csr->n_cols;
     return STATUS_OK;
 }
 
 int make_stochastic(CSR* csr) {
     //TODO
+    int outlink[csr->n_rows];
+    int i;
+    for (i = 0; i < csr->n_rows; i++) {
+        if (csr->row_ptr[i+1] != 0) {
+        }
+    }
+
+
     return STATUS_OK;
 }
