@@ -29,6 +29,7 @@ int allocate_csr(CSR* csr, int n_cols, int n_rows) {
 
     csr->n_cols = n_cols;
     csr->n_rows = n_rows;
+
     return STATUS_OK;
 }
 
@@ -56,5 +57,10 @@ int csr_from_dataset(DATASET dataset, CSR* csr) {
             row_idx += new_rows;
         }
     }
+    return STATUS_OK;
+}
+
+int make_stochastic(CSR* csr) {
+    //TODO
     return STATUS_OK;
 }

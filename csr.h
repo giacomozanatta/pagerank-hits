@@ -12,4 +12,5 @@ typedef struct CSR {
 
 int csr_from_dataset(DATASET dataset, CSR* csr);
 
+int make_stochastic(CSR* csr);
 #endif
