@@ -156,3 +156,12 @@ int read_dataset_from_file(char *file_path, DATASET* dataset, int order) {
     }
     return STATUS_OK;
 }
+
+void print_dataset(DATASET dataset) {
+    int i;
+    printf("***** DATASET *****\n");
+    printf("N_NODES: %d\tN_EDGES=%d\n", dataset.n_nodes, dataset.n_edges);
+    for (i = 0; i < dataset.n_edges; i++) {
+        printf("%d %d\n", dataset.DATA[i][0], dataset.DATA[i][1]);
+    }
+}

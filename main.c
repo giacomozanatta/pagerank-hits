@@ -4,6 +4,7 @@
 #include "dataset.h"
 #include "constants.h"
 #include "csr.h"
+#include "pagerank.h"
 
 int main() {
 
@@ -19,19 +20,20 @@ int main() {
     /*for (i = 0; i < dataset.n_edges; i++) {
         printf("\t%d\t%d\n", dataset.DATA[i][0], dataset.DATA[i][1]);
     }*/
-    printf("n_rows: %d n_cols:%d\n", dataset.n_nodes, dataset.n_edges);
+   // printf("n_rows: %d n_cols:%d\n", dataset.n_nodes, dataset.n_edges);
+   print_dataset(dataset);
     status = csr_from_dataset(dataset, &csr);
     if (status == STATUS_ERR) {
         printf("[ERR] Error creating CSR.\n");
         return STATUS_ERR;
     }
     status = make_stochastic(&csr);
-    //page_rank_iterate();
+    pagerank(csr);
 
     //hits_iterate();
     //in_degree_ranking();
     //jaccard();
-    printf("***** NUM_COLS: %d\n", csr.n_cols);
+   /* printf("***** NUM_COLS: %d\n", csr.n_cols);
     for (int i = 0; i < csr.n_cols; i++) {
         printf("%d\n", csr.col_index[i]);
     }
@@ -39,17 +41,10 @@ int main() {
     printf("****** NUM_ROWS: %d\n", csr.n_rows);
     for (i = 0; i < csr.n_rows; i++) {
         printf("%d\n", csr.row_ptr[i]);
-    }
-    printf("\n\n\n\n");
-    /*for (i = 0; i < csr.n_cols; i++) {
-        int row_elem = csr.row_ptr[i + 1] - csr.row_ptr[i];
-        for (int j = 0; j < row_elem; j++) {
-            printf("%d %d\n", csr.row_ptr[i], csr.col_index[k] );
-            k++;
-        }
-        //printf("\t0 %d\n", csr.col_index[i]);
     }*/
+    printf("\n\n\n\n");
+    
     destroy_dataset(&dataset);
     printf("[OK] Success.\n");
-    return 0;
+    return STATUS_OK;
 }

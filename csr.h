@@ -3,7 +3,7 @@
 #include "dataset.h"
 
 typedef struct CSR {
-    int* val;
+    float* val;
     int *col_index;
     int *row_ptr;
     int n_rows;
