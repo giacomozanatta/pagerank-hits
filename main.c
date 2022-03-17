@@ -8,10 +8,6 @@
 #include "csr.h"
 #include "ranking.h"
 
-int k = 100000;
-char* file_name = "data/web-NotreDame.txt";
-
-
 int compute_pagerank(CSR csr, Ranking* page_rank);
 int compute_hits(CSR csr, CSR csr_transpose, Ranking* hits_authority, Ranking* hits_hub);
 int compute_indegree_rank(CSR csr, Ranking *indegree_rank);
@@ -24,15 +20,27 @@ int main(int argc, char *argv[]) {
     Ranking hits_authority_rank = NULL;
     Ranking hits_hub_rank = NULL;
     Ranking indegree_rank = NULL;
+
     DATASET dataset;
     DATASET dataset_transpose;
-    clock_t clock_start_time;
-    clock_t clock_start_time_total = clock();
+
     CSR csr;
     CSR csr_transpose;
     CSR csr_transpose_stochastic;
 
+    clock_t clock_start_time;
+    clock_t clock_start_time_total = clock();
+
     char *name;
+    char* file_name;
+    int k;
+    // get the filename and k from argv
+    if (argc != 3) {
+        printf("[ERR] usage: ./main filepath k\n");
+        return STATUS_ERR;
+    }
+    k = atoi(argv[2]);
+    file_name = argv[1];
     // Read from file
     clock_start_time = clock();
     if (read_dataset_from_file(file_name, &dataset, FROM_NODE_ID_FIRST) == STATUS_ERR) {
@@ -78,6 +86,7 @@ int main(int argc, char *argv[]) {
     strcpy(name, dataset.name);
     strcat(name, "S");
     strcpy(dataset_transpose.name, name);
+    free(name);
     if (csr_from_dataset(dataset_transpose, &csr_transpose_stochastic) == STATUS_ERR) {
         printf("[ERR] CSR Creation error.\n");
         return STATUS_ERR;
@@ -127,7 +136,13 @@ int main(int argc, char *argv[]) {
     printf("\n\nJACCARD HITS AUTH - INDEGREE:\n");
     compute_score(hits_authority_rank, indegree_rank, k);
 
+    printf("[INFO] Freeing memory...\n");
     destroy_dataset(&dataset);
+    destroy_dataset(&dataset_transpose);
+    
+    destroy_csr(&csr);
+    destroy_csr(&csr_transpose);
+    destroy_csr(&csr_transpose_stochastic);
     printf("[INFO] DONE.\n");
     printf("[INFO] Total time: %f\n\n", (double)(clock() - clock_start_time_total) / CLOCKS_PER_SEC);
     return STATUS_OK;

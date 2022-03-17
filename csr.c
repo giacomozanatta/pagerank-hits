@@ -12,6 +12,35 @@ int allocate_csr_mmap(CSR* csr, int n_cols, int n_rows, char* file_name_prefix);
 int csr_from_dataset_mmap(DATASET dataset, CSR* csr);
 #endif
 
+int destroy_csr(CSR* csr) {
+    #ifdef MMAP
+    if (munmap(csr->val,  sizeof(float)*csr->n_cols) == -1) {
+        printf("[ERR] munmap error.\n");
+        return STATUS_ERR;
+    }
+
+    if (munmap(csr->row_ptr, sizeof(int)*(csr->n_rows+1)) == -1) {
+        printf("[ERR] munmap error.\n");
+        return STATUS_ERR;
+    }
+    if (munmap(csr->col_index, sizeof(int)*(csr->n_cols)) == -1) {
+        printf("[ERR] munmap error.\n");
+        return STATUS_ERR;
+    }
+    #else
+    free(csr->val);
+    free(csr->col_index);
+    free(csr->row_ptr);
+    #endif
+    csr->val = NULL;
+    csr->col_index = NULL;
+    csr->row_ptr = NULL;
+    csr->n_cols = 0;
+    csr->n_rows = 0;
+
+    return STATUS_OK;
+}
+
 int allocate_csr(CSR* csr, int n_cols, int n_rows) {
     csr->val = (float*) malloc(sizeof(float)*n_cols);
 

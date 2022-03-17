@@ -9,8 +9,7 @@ typedef struct CSR {
     int n_rows;
     int n_cols;
 } CSR;
-
+int destroy_csr(CSR* csr);
 int csr_from_dataset(DATASET dataset, CSR* csr);
-
 int make_stochastic(CSR* csr);
 #endif
