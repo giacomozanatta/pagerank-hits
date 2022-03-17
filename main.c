@@ -8,13 +8,13 @@
 #include "csr.h"
 #include "ranking.h"
 
-int k = 30;
+int k = 100000;
 char* file_name = "data/web-NotreDame.txt";
 
 
-int compute_pagerank(DATASET dataset, Ranking* page_rank);
-int compute_hits(DATASET dataset, DATASET dataset_traspose, Ranking* hits_authority, Ranking* hits_hub);
-int compute_indegree_rank(DATASET dataset, Ranking *indegree_rank);
+int compute_pagerank(CSR csr, Ranking* page_rank);
+int compute_hits(CSR csr, CSR csr_transpose, Ranking* hits_authority, Ranking* hits_hub);
+int compute_indegree_rank(CSR csr, Ranking *indegree_rank);
 void print_top_k(Ranking R, int k);
 void compute_score(Ranking A, Ranking B, int k);
 
@@ -25,16 +25,15 @@ int main(int argc, char *argv[]) {
     Ranking hits_hub_rank = NULL;
     Ranking indegree_rank = NULL;
     DATASET dataset;
-    DATASET dataset_traspose;
+    DATASET dataset_transpose;
     clock_t clock_start_time;
     clock_t clock_start_time_total = clock();
+    CSR csr;
+    CSR csr_transpose;
+    CSR csr_transpose_stochastic;
 
-    /*CSR csr;
-    CSR csr_traspose;
-    */
+    char *name;
     // Read from file
-
-    printf("[INFO] Reading dataset...\n");
     clock_start_time = clock();
     if (read_dataset_from_file(file_name, &dataset, FROM_NODE_ID_FIRST) == STATUS_ERR) {
         printf("[ERR] Error reading file.\n");
@@ -42,15 +41,18 @@ int main(int argc, char *argv[]) {
     }
     printf("[INFO] Done reading dataset. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     printf("[INFO] Reading transposed dataset...\n");
+
     clock_start_time = clock();
-    if (read_dataset_from_file(file_name, &dataset_traspose, TO_NODE_ID_FIRST) == STATUS_ERR) {
+    if (read_dataset_from_file(file_name, &dataset_transpose, TO_NODE_ID_FIRST) == STATUS_ERR) {
         printf("[ERR] Error reading file.\n");
         return STATUS_ERR;
     }
-    printf("[INFO] Done reading transpose dataset. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
-    /*
-    printf("[INFO] Generating CSR...\n");
 
+    printf("[INFO] Done reading transpose dataset. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
+    printf("[INFO] Reading dataset...\n");
+    clock_start_time = clock();
+
+    printf("[INFO] Generating CSR...\n");
     clock_start_time = clock();
     // generate CSR matrix
     if (csr_from_dataset(dataset, &csr) == STATUS_ERR) {
@@ -60,25 +62,48 @@ int main(int argc, char *argv[]) {
     printf("[INFO] Done generating CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     
     clock_start_time = clock();
-    printf("[INFO] Generating transosed CSR...\n");
-    if (csr_from_dataset(dataset_traspose, &csr_traspose) == STATUS_ERR) {
+    printf("[INFO] Generating transposed CSR...\n");
+    if (csr_from_dataset(dataset_transpose, &csr_transpose) == STATUS_ERR) {
         printf("[ERR] CSR Creation error.\n");
         return STATUS_ERR;
     }
 
     printf("[INFO] Done generating transpose CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
-    */
     clock_start_time = clock();
+
+    clock_start_time = clock();
+    printf("[INFO] Generating transposed CSR...\n");
+    // change dataset name
+    name = (char*)malloc(strlen(dataset_transpose.name) + 2);
+    strcpy(name, dataset.name);
+    strcat(name, "S");
+    strcpy(dataset_transpose.name, name);
+    if (csr_from_dataset(dataset_transpose, &csr_transpose_stochastic) == STATUS_ERR) {
+        printf("[ERR] CSR Creation error.\n");
+        return STATUS_ERR;
+    }
+    printf("[INFO] Done generating transpose CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
+    printf("[INFO] Stochastization...\n");
+    clock_start_time = clock();
+    if (make_stochastic(&csr_transpose_stochastic) == STATUS_ERR) {
+        printf("[ERR] Matrix Stochastization Error.\n");
+        free(&csr);
+        return STATUS_ERR;
+    }
+    printf("[INFO] Done stochastization. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
+
+    clock_start_time = clock();
+
     printf("[INFO] Computing Pagerank...\n");
-    compute_pagerank(dataset_traspose, &page_rank);
+    compute_pagerank(csr_transpose_stochastic, &page_rank);
     printf("[INFO] Done computing Pagerank. Total time spent: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     printf("[INFO] Computing HITS...\n");
     clock_start_time = clock();
-    compute_hits(dataset, dataset_traspose, &hits_authority_rank, &hits_hub_rank);
+    compute_hits(csr, csr_transpose, &hits_authority_rank, &hits_hub_rank);
     printf("[INFO] Done computing HITS. Total time spent: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     printf("[INFO] Computing INDEGREE...\n");
     clock_start_time = clock();
-    compute_indegree_rank(dataset_traspose, &indegree_rank);
+    compute_indegree_rank(csr_transpose, &indegree_rank);
     printf("[INFO] Done computing INDEGREE. Total time spent: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     
     
@@ -94,13 +119,13 @@ int main(int argc, char *argv[]) {
     print_top_k(indegree_rank, k);
 
     printf("\n\nJACCARD PAGE RANK - HITS AUTH:\n");
-    compute_score(page_rank, hits_authority_rank, 100000);
+    compute_score(page_rank, hits_authority_rank, k);
 
     printf("\n\nJACCARD PAGE RANK - INDEGREE:\n");
-    compute_score(page_rank, indegree_rank, 100000);
+    compute_score(page_rank, indegree_rank, k);
 
     printf("\n\nJACCARD HITS AUTH - INDEGREE:\n");
-    compute_score(hits_authority_rank, indegree_rank, 100000);
+    compute_score(hits_authority_rank, indegree_rank, k);
 
     destroy_dataset(&dataset);
     printf("[INFO] DONE.\n");
@@ -108,27 +133,9 @@ int main(int argc, char *argv[]) {
     return STATUS_OK;
 }
 
-int compute_pagerank(DATASET dataset, Ranking* page_rank) {
+int compute_pagerank(CSR csr, Ranking* page_rank) {
     clock_t clock_start_time;
-    CSR csr;
     int n_iter;
-    printf("[INFO] PAGERANK: Generating transposed CSR...\n");
-    clock_start_time = clock();
-    if (csr_from_dataset(dataset, &csr) == STATUS_ERR) {
-        printf("[ERR] CSR Creation error.\n");
-        return STATUS_ERR;
-    }
-    printf("[INFO] PAGERANK: Done generating transposed CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
-     // Make the CSR Stochatic
-    printf("[INFO] PAGERANK: Stochastization...\n");
-    clock_start_time = clock();
-    if (make_stochastic(&csr) == STATUS_ERR) {
-        printf("[ERR] Matrix Stochastization Error.\n");
-        free(&csr);
-        return STATUS_ERR;
-    }
-    printf("[INFO] PAGERANK: Done stochastization. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
-    // Compute the PageRank
     printf("[INFO] PAGERANK: Computing... \n");
     clock_start_time = clock();
     if (pagerank(csr, page_rank, &n_iter) == STATUS_ERR) {
@@ -146,29 +153,12 @@ int compute_pagerank(DATASET dataset, Ranking* page_rank) {
     return STATUS_OK;
 }
 
-int compute_hits(DATASET dataset, DATASET dataset_traspose, Ranking* hits_authority, Ranking* hits_hub) {
-    CSR csr;
-    CSR csr_traspose;
+int compute_hits(CSR csr, CSR csr_transpose, Ranking* hits_authority, Ranking* hits_hub) {
     int n_iter;
     clock_t clock_start_time;
-    printf("[INFO] HITS: Generating CSR...\n");
-    clock_start_time = clock();
-    if (csr_from_dataset(dataset, &csr) == STATUS_ERR) {
-        printf("[ERR] CSR Creation error.\n");
-        return STATUS_ERR;
-    }
-    printf("[INFO] HITS: Done generating CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
-    printf("[INFO] HITS: Generating transposed CSR...\n");
-    clock_start_time = clock();
-    if (csr_from_dataset(dataset_traspose, &csr_traspose) == STATUS_ERR) {
-        printf("[ERR] CSR Creation error.\n");
-        return STATUS_ERR;
-    }
-    printf("[INFO] HITS: Done generating transposed CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
-    // Compute HITS
     printf("[INFO] HITS: Computing... \n");
     clock_start_time = clock();
-    if (hits(csr, csr_traspose, hits_authority, hits_hub, &n_iter) == STATUS_ERR) {
+    if (hits(csr, csr_transpose, hits_authority, hits_hub, &n_iter) == STATUS_ERR) {
         printf("[ERR] HITS calculation error.\n");
         return STATUS_ERR;
     }
@@ -182,16 +172,8 @@ int compute_hits(DATASET dataset, DATASET dataset_traspose, Ranking* hits_author
     return STATUS_OK;
 }
 
-int compute_indegree_rank(DATASET dataset, Ranking *indegree_rank) {
-    CSR csr;
+int compute_indegree_rank(CSR csr, Ranking *indegree_rank) {
     clock_t clock_start_time;
-    printf("[INFO] INDEGREE: Generating CSR...\n");
-    clock_start_time = clock();
-    if (csr_from_dataset(dataset, &csr) == STATUS_ERR) {
-        printf("[ERR] CSR Creation error.\n");
-        return STATUS_ERR;
-    }
-    printf("[INFO] INDEGREE: Done generating CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     printf("[INFO] INDEGREE: Computing...\n");
     clock_start_time = clock();
     if (indegree(csr, indegree_rank) == STATUS_ERR) {
@@ -216,9 +198,9 @@ void print_top_k(Ranking R, int k) {
 }
 
 void compute_score(Ranking A, Ranking B, int k) {
-    int i;
+    int i = k;
     printf("K\tVALUE\n\n");
-    for (i = 100; i < k; i+=100) {
-        printf("%d\t%f\n", i, jaccard_score(A,B,i));
-    }
+    //for (i = ; i < k; i+=100) {
+    printf("%d\t%f\n", i, jaccard_score(A,B,i));
+    //}
 }
