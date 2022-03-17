@@ -23,6 +23,8 @@ void destroy_dataset(DATASET* dataset) {
         free(dataset->DATA[i]);
     }
     free(dataset->DATA);
+    free(dataset->name);
+    dataset->name = NULL;
     dataset->DATA = NULL;
     dataset->n_edges = 0;
     dataset->n_nodes = 0;
@@ -130,6 +132,24 @@ int get_dataset_entries(FILE *file, DATASET* dataset, int order) {
     return STATUS_OK;
 }
 
+int set_dataset_name(char *file_path, DATASET* dataset, int order) {
+    int file_path_len = strlen(file_path);
+    dataset->name =(char*) malloc(file_path_len + 2);
+    if (dataset->name == NULL) {
+        printf("[ERR] Fail allocating memory for dataset name.\n");
+        return STATUS_ERR;
+    }
+    strcpy(dataset->name, file_path);
+    if (order == TO_NODE_ID_FIRST) {
+        dataset->name[file_path_len] = 'S';
+    } else {
+        dataset->name[file_path_len] = 'T';
+    }
+    // adjust the \0
+    dataset->name[file_path_len + 1] = '\0';
+    return STATUS_OK;
+}
+
 int read_dataset_from_file(char *file_path, DATASET* dataset, int order) {
     FILE *f;
     int status;
@@ -144,11 +164,20 @@ int read_dataset_from_file(char *file_path, DATASET* dataset, int order) {
         printf("[ERR] Fail getting dataset size.\n");
         return STATUS_ERR;
     }
-    // initialize DATASET
+    if (set_dataset_name(file_path, dataset, order) == STATUS_ERR) {
+        printf("[ERR] Error setting the dataset name.\n");
+        return STATUS_ERR;
+    }
     dataset->DATA = (int**)malloc(sizeof(int*)*dataset->n_edges);
-    //TODO: check error
+    if (dataset->DATA == NULL) {
+        printf("[ERR] Error allocating memory for dataset.\n");
+        free(dataset->name);
+        return STATUS_ERR;
+    }
     if ((status = get_dataset_entries(f, dataset, order)) == STATUS_ERR) {
-        printf("[ERR] ");
+        printf("[ERR] Get dataset entries error.");
+        free(dataset->name);
+        return STATUS_ERR;
     }
     if (fclose(f) == EOF) {
         printf("[ERR] Error closing the file.\n");

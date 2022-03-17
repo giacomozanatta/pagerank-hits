@@ -10,6 +10,7 @@ typedef struct DATASET {
     int** DATA;
     int n_nodes;
     int n_edges;
+    char* name;
 } DATASET;
 
 int read_dataset_from_file(char *file_path, DATASET* dataset, int order);
