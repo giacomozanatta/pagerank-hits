@@ -222,7 +222,7 @@ int indegree(CSR csr, Ranking* I) {
     for (i = 0; i < csr.n_rows-1; i++) {
         int n_out_links = csr.row_ptr[i+1] - csr.row_ptr[i];
         (*I)[i].ID = i;
-        (*I)[i].value = (double) n_out_links / (double) csr.n_rows;
+        (*I)[i].value = (double) n_out_links / (double) (csr.n_rows-1);
     }
     return STATUS_OK;
 }
