@@ -17,5 +17,4 @@ int read_dataset_from_file(char *file_path, DATASET* dataset, int order);
 void sort_dataset(DATASET *dataset);
 void destroy_dataset(DATASET* dataset);
 void print_dataset(DATASET dataset);
-int get_dataset_size(FILE *file, DATASET* dataset);
 #endif

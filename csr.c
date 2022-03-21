@@ -99,17 +99,26 @@ int csr_from_dataset_mmap(DATASET dataset, CSR* csr) {
     // open files in write mode.
     file_val = fopen(val_file_name, "w");
     if (file_val == NULL) {
+        free(val_file_name);
+        free(col_index_name);
+        free(row_ptr_name);
         printf("[ERR] Error opening mmap file");
         return STATUS_ERR;
     }
     file_row_ptr = fopen(row_ptr_name, "w");
     if (file_row_ptr == NULL) {
+        free(val_file_name);
+        free(col_index_name);
+        free(row_ptr_name);
         fclose(file_val);
         printf("[ERR] Error opening mmap file");
         return STATUS_ERR;
     }
     file_col_idx = fopen(col_index_name, "w");
     if (file_col_idx == NULL) {
+        free(val_file_name);
+        free(col_index_name);
+        free(row_ptr_name);
         fclose(file_row_ptr);
         fclose(file_val);
         printf("[ERR] Error opening mmap file");
@@ -190,6 +199,9 @@ int allocate_csr_mmap(CSR* csr, int n_cols, int n_rows, char* file_name_prefix) 
     if (csr->val == MAP_FAILED) {
         close(fstream_val);
         printf("[ERR] MMAP error\n");
+        free(val_file_name);
+        free(col_index_name);
+        free(row_ptr_name);
         return STATUS_ERR;
     }
     close(fstream_val);
@@ -203,6 +215,9 @@ int allocate_csr_mmap(CSR* csr, int n_cols, int n_rows, char* file_name_prefix) 
     csr->col_index = (int*) mmap(0, sizeof(int)*(n_cols), PROT_READ, MAP_SHARED, fstream_col_idx, 0);
     if (csr->col_index == MAP_FAILED) {
         close(fstream_col_idx);
+        free(val_file_name);
+        free(col_index_name);
+        free(row_ptr_name);
         printf("[ERR] MMAP error");
         return STATUS_ERR;
     }
@@ -212,12 +227,18 @@ int allocate_csr_mmap(CSR* csr, int n_cols, int n_rows, char* file_name_prefix) 
     fstream_row_ptr = open(row_ptr_name, O_RDWR);
     if (fstream_row_ptr == -1) {
         printf("[ERR] Error opening mmap file");
+        free(val_file_name);
+        free(col_index_name);
+        free(row_ptr_name);
         return STATUS_ERR;
     }
     csr->row_ptr = (int*) mmap(0, sizeof(int)*(n_rows + 1), PROT_READ, MAP_SHARED, fstream_row_ptr, 0);
     if (csr->row_ptr == MAP_FAILED) {
         close(fstream_row_ptr);
         printf("[ERR] MMAP error");
+        free(val_file_name);
+        free(col_index_name);
+        free(row_ptr_name);
         return STATUS_ERR;
     }
     close(fstream_row_ptr);

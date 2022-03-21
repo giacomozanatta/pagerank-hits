@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "constants.h"
 
+#define ERROR_THRESHOLD 10e-10
+
 int number_eq_elements(Ranking A, Ranking B, int k) {
     int i, j;
     int count = 0;
@@ -25,9 +27,7 @@ double jaccard_score(Ranking A, Ranking B, int k) {
     }
     return (double) eq_elements / (((double) k*2) - eq_elements);
 }
-double kendalltau_score(Ranking A, Ranking B, int k) {
-    return 0.0;
-}
+
 int compare_rank_entries(const void *a, const void *b) {
     // sort in reverse order
     const RankEntry *_a = (const RankEntry *)a;
@@ -102,7 +102,7 @@ int pagerank(CSR csr, Ranking* P, int* n_iter) {
            P_next[i].value = 0.0;
         }
         (*n_iter)++;
-    } while(error > 0.000001);
+    } while(error > ERROR_THRESHOLD);
     free(P_next);
     return STATUS_OK;
 }
@@ -203,7 +203,7 @@ int hits(CSR csr, CSR csr_traspose, Ranking* A, Ranking* H, int *n_iter) {
 
         (*n_iter)++;
 
-    } while(error_a > 10e-8 && error_h > 10e-8);
+    } while(error_a > ERROR_THRESHOLD && error_h > ERROR_THRESHOLD);
     free(H_next);
     free(A_next);
     return STATUS_OK;

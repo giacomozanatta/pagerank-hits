@@ -26,21 +26,21 @@ int main(int argc, char *argv[]) {
 
     CSR csr;
     CSR csr_transpose;
-    CSR csr_transpose_stochastic;
+    CSR csr_stochastic;
 
     clock_t clock_start_time;
     clock_t clock_start_time_total = clock();
 
     char *name;
-    char* file_name;
-    int k;
+    char* file_name ="data/test3.txt";
+    int k = 14;
     // get the filename and k from argv
-    if (argc != 3) {
+   /if (argc != 3) {
         printf("[ERR] usage: ./main filepath k\n");
         return STATUS_ERR;
     }
     k = atoi(argv[2]);
-    file_name = argv[1];
+    file_name = argv[1];*/
     // Read from file
     clock_start_time = clock();
     if (read_dataset_from_file(file_name, &dataset, FROM_NODE_ID_FIRST) == STATUS_ERR) {
@@ -67,6 +67,8 @@ int main(int argc, char *argv[]) {
         printf("[ERR] CSR Creation error.\n");
         return STATUS_ERR;
     }
+    make_stochastic(&csr);
+
     printf("[INFO] Done generating CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     
     clock_start_time = clock();
@@ -87,24 +89,24 @@ int main(int argc, char *argv[]) {
     strcat(name, "S");
     strcpy(dataset_transpose.name, name);
     free(name);
-    if (csr_from_dataset(dataset_transpose, &csr_transpose_stochastic) == STATUS_ERR) {
+    if (csr_from_dataset(dataset, &csr_stochastic) == STATUS_ERR) {
         printf("[ERR] CSR Creation error.\n");
         return STATUS_ERR;
     }
     printf("[INFO] Done generating transpose CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     printf("[INFO] Stochastization...\n");
     clock_start_time = clock();
-    if (make_stochastic(&csr_transpose_stochastic) == STATUS_ERR) {
+    if (make_stochastic(&csr_stochastic) == STATUS_ERR) {
         printf("[ERR] Matrix Stochastization Error.\n");
         free(&csr);
         return STATUS_ERR;
     }
-    printf("[INFO] Done stochastization. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
+   printf("[INFO] Done stochastization. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
 
     clock_start_time = clock();
 
     printf("[INFO] Computing Pagerank...\n");
-    compute_pagerank(csr_transpose_stochastic, &page_rank);
+    compute_pagerank(csr_stochastic, &page_rank);
     printf("[INFO] Done computing Pagerank. Total time spent: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     printf("[INFO] Computing HITS...\n");
     clock_start_time = clock();
@@ -142,7 +144,7 @@ int main(int argc, char *argv[]) {
     
     destroy_csr(&csr);
     destroy_csr(&csr_transpose);
-    destroy_csr(&csr_transpose_stochastic);
+    destroy_csr(&csr_stochastic);
     printf("[INFO] DONE.\n");
     printf("[INFO] Total time: %f\n\n", (double)(clock() - clock_start_time_total) / CLOCKS_PER_SEC);
     return STATUS_OK;
