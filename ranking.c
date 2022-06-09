@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include "constants.h"
 
-#define ERROR_THRESHOLD 10e-10
+// TODO: allows user to choose the desired error threshold
+#define ERROR_THRESHOLD 10e-8
 
 int number_eq_elements(Ranking A, Ranking B, int k) {
     int i, j;
@@ -42,7 +43,14 @@ int compare_rank_entries(const void *a, const void *b) {
     
     return -1;
 }
-
+/**
+ * @brief Calculate the error between 2 ranking. 
+ * 
+ * @param M - a ranking
+ * @param M_next - another ranking
+ * @param n - input size
+ * @return float - the error
+ */
 float get_error(Ranking M, Ranking M_next, int n) {
     float error = 0.0;
     int i = 0;
@@ -51,7 +59,14 @@ float get_error(Ranking M, Ranking M_next, int n) {
     }
     return error;
 }
-
+/**
+ * @brief compute the PageRank of the given graph.
+ * 
+ * @param csr - the input graph.
+ * @param P - the Page Rank Ranking.
+ * @param n_iter - number of iteration 
+ * @return int - STATUS 
+ */
 int pagerank(CSR csr, Ranking* P, int* n_iter) {
     int i, j, col_bound;
     Ranking P_next;
@@ -72,7 +87,8 @@ int pagerank(CSR csr, Ranking* P, int* n_iter) {
         free(P);
         return STATUS_ERR;
     }
-
+    // set the dumping factor
+    //TODO: allows user to choose the desired d value.
     d = 0.85;
     for (i = 0; i < csr.n_rows-1; i++) {
         (*P)[i].ID = i;
@@ -107,6 +123,16 @@ int pagerank(CSR csr, Ranking* P, int* n_iter) {
     return STATUS_OK;
 }
 
+/**
+ * @brief compute the HITS of the graph.
+ * 
+ * @param csr - the input graph
+ * @param csr_traspose - the transposed input graph
+ * @param A - the Authority output ranking
+ * @param H - the Hub output ranking
+ * @param n_iter - number of iterations
+ * @return int - STATUS
+ */
 int hits(CSR csr, CSR csr_traspose, Ranking* A, Ranking* H, int *n_iter) {
     Ranking A_next = NULL;
     Ranking H_next = NULL;
@@ -209,6 +235,13 @@ int hits(CSR csr, CSR csr_traspose, Ranking* A, Ranking* H, int *n_iter) {
     return STATUS_OK;
 }
 
+/**
+ * @brief compute the indegree ranking
+ * 
+ * @param csr - the input graph
+ * @param I - the output ranking
+ * @return int - STATUS
+ */
 int indegree(CSR csr, Ranking* I) {
     int i;
     if (*I != NULL) {

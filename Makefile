@@ -2,7 +2,7 @@ default: main.o dataset.o csr.o ranking.o ranking.o utils.o
 	gcc -std=gnu89 -Wall -pedantic -O3 -o ranking main.o dataset.o utils.o csr.o ranking.o
 	rm -f *.o
 mmap: main.o dataset.o csr_mmap.o ranking.o ranking.o utils.o 
-	gcc -std=gnu89 -Wall -pedantic -O3 -o  ranking-nnmap main.o dataset.o utils.o csr.o ranking.o
+	gcc -std=gnu89 -Wall -pedantic -O3 -o  ranking-mmap main.o dataset.o utils.o csr.o ranking.o
 	rm -f *.o
 main.o: main.c
 	gcc -g -std=gnu89 -Wall -pedantic -O3 -c main.c

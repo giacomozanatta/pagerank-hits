@@ -32,17 +32,18 @@ int main(int argc, char *argv[]) {
     clock_t clock_start_time_total = clock();
 
     char *name;
-    char* file_name ="data/test3.txt";
-    int k = 14;
+    char* file_name;
+    int k;
     // get the filename and k from argv
-   /if (argc != 3) {
+    if (argc != 3) {
         printf("[ERR] usage: ./main filepath k\n");
         return STATUS_ERR;
     }
     k = atoi(argv[2]);
-    file_name = argv[1];*/
+    file_name = argv[1];
     // Read from file
     clock_start_time = clock();
+    // DATASET
     if (read_dataset_from_file(file_name, &dataset, FROM_NODE_ID_FIRST) == STATUS_ERR) {
         printf("[ERR] Error reading file.\n");
         return STATUS_ERR;
@@ -51,6 +52,7 @@ int main(int argc, char *argv[]) {
     printf("[INFO] Reading transposed dataset...\n");
 
     clock_start_time = clock();
+    // DATASET TRANSPOSE
     if (read_dataset_from_file(file_name, &dataset_transpose, TO_NODE_ID_FIRST) == STATUS_ERR) {
         printf("[ERR] Error reading file.\n");
         return STATUS_ERR;
@@ -62,17 +64,17 @@ int main(int argc, char *argv[]) {
 
     printf("[INFO] Generating CSR...\n");
     clock_start_time = clock();
-    // generate CSR matrix
+    // STANDARD CSR
     if (csr_from_dataset(dataset, &csr) == STATUS_ERR) {
         printf("[ERR] CSR Creation error.\n");
         return STATUS_ERR;
     }
-    make_stochastic(&csr);
 
     printf("[INFO] Done generating CSR. Time: %f\n", (double)(clock() - clock_start_time) / CLOCKS_PER_SEC);
     
     clock_start_time = clock();
     printf("[INFO] Generating transposed CSR...\n");
+    // TRANSPOSED CSR
     if (csr_from_dataset(dataset_transpose, &csr_transpose) == STATUS_ERR) {
         printf("[ERR] CSR Creation error.\n");
         return STATUS_ERR;
@@ -84,11 +86,12 @@ int main(int argc, char *argv[]) {
     clock_start_time = clock();
     printf("[INFO] Generating transposed CSR...\n");
     // change dataset name
-    name = (char*)malloc(strlen(dataset_transpose.name) + 2);
+    name = (char*)malloc(strlen(dataset.name) + 2);
     strcpy(name, dataset.name);
     strcat(name, "S");
-    strcpy(dataset_transpose.name, name);
+    strcpy(dataset.name, name);
     free(name);
+    // STOCHASTIC CSR
     if (csr_from_dataset(dataset, &csr_stochastic) == STATUS_ERR) {
         printf("[ERR] CSR Creation error.\n");
         return STATUS_ERR;
@@ -215,9 +218,9 @@ void print_top_k(Ranking R, int k) {
 }
 
 void compute_score(Ranking A, Ranking B, int k) {
-    int i = k;
+    int i;
     printf("K\tVALUE\n\n");
-    //for (i = ; i < k; i+=100) {
-    printf("%d\t%f\n", i, jaccard_score(A,B,i));
-    //}
+    for (i = 1; i <= k; i++) {
+        printf("CIAO%d,%f\n", i, jaccard_score(A,B,i));
+    }
 }
