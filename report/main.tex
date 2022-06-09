@@ -359,9 +359,9 @@ User must launch the program passing two parameters as arguments: the first one 
 \begin{verbatim}./ranking data/web-NotreDame.txt 30\end{verbatim}
 it will launch the default version of program (without mmap) using the dataset data/web-NotreDame.txt and with the top 30 ranking printed out.
 \section{Some results}
-Now we analyze the dataset web-NotreDame. 
-With error threshold at 10e-8 and d=0.85 PageRank converges at iteration 66
-With error threshold at 10e-8 Hits converges at iteration 93
+Now we analyze the dataset web-NotreDame. \\
+With error threshold at 10e-8 and d=0.85 PageRank converges at iteration 66.\\
+With error threshold at 10e-8 Hits converges at iteration 93.\\
 The top 30 pages returned by page rank are:
 \begin{verbatim}
 1) ID: 1963 RANK: 0.002069
@@ -553,6 +553,7 @@ Here the logging of the program:\\
     [INFO] INDEGREE: done sorting rank entries. Time: 0.005886
     [INFO] Done computing INDEGREE. Total time spent: 0.007383
 \end{verbatim}
+
 We notice also that PageRank converges faster than HITS. This because HITS needs that both the errors of hubs and authority are under the threshold.
 \section{Future works and improvement}
 
