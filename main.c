@@ -221,6 +221,6 @@ void compute_score(Ranking A, Ranking B, int k) {
     int i;
     printf("K\tVALUE\n\n");
     for (i = 1; i <= k; i++) {
-        printf("CIAO%d,%f\n", i, jaccard_score(A,B,i));
+        printf("%d,%f\n", i, jaccard_score(A,B,i));
     }
 }
